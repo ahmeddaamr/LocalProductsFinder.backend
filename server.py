@@ -1,98 +1,64 @@
 from flask import Flask, abort, request, jsonify, send_from_directory
 from flask_cors import CORS
 import os
-from Models.Recommendation.recommend1 import recommend
-from Models.Identification.test import predict
-from Dataset.fetch_products import fetchProducts
-
+from mongoengine import connect , disconnect , get_connection
+from Routes.fetchProductsRoute import fetchProducts_bp
+from Routes.imagesRoute import images_bp
+from Routes.predictRoute import predict_bp
+from Routes.recommendRoute import recommend_bp
+from Routes.userRoute import user_bp
+from Routes.ratingRoute import rating_bp
+import atexit, signal, sys
 app = Flask(__name__)
-CORS(app)  # Enable CORS for cross-origin requests
 
+# Enable CORS for cross-origin requests
+CORS(app)
+
+#disconnect from MongoDB if already connected
+# if(get_connection()):
+disconnect()
+print("[MongoDB] Disconnected (initialization)")
+# Connect to the MongoDB database
+connect('LocalProductsFinder', host='localhost', port=27017)
+print("[MongoDB] Connected to LocalProductsFinder at : localhost:27017")
+
+# # On process exit (normal termination, including Ctrl+C)
+# @atexit.register
+# def on_exit():
+#     disconnect()
+#     print("[MongoDB] Disconnected (atexit)")
+
+# On SIGINT (Ctrl+C)
+def handle_sigint(sig, frame):
+    disconnect()
+    print("\n[MongoDB] Disconnected (SIGINT)")
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, handle_sigint)
+
+# # Disconnect on app context teardown
+# @app.teardown_appcontext
+# def close_mongo_connection(exception=None):
+#     disconnect()
+#     print("[MongoDB] Disconnected on shutdown.")
+
+# Set the upload folder for images
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
-@app.route("/upload", methods=["POST"])
-def upload_image():
-    if "file" not in request.files:
-        return jsonify({"error": "No file part"}), 400
-
-    file = request.files["file"]
-    if file.filename == "":
-        return jsonify({"error": "No selected file"}), 400
-
-    filepath = os.path.join(app.config["UPLOAD_FOLDER"], file.filename)
-    file.save(filepath)
-    return jsonify({"message": "File uploaded", "filename": file.filename}), 200
-
-# @app.route("/image/<filename>", methods=["GET"])
-# def get_image(filename):
-#     return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
-
-# @app.route("/images", methods=["GET"])
-# def get_all_images():
-#     """Fetch all image filenames in the uploads folder"""
-#     files = os.listdir(app.config["UPLOAD_FOLDER"])
-#     images = [f"http://127.0.0.1:5000/image/{file}" for file in files]  # Generate URLs
-#     return jsonify({"images": images})
-
-@app.route("/predict", methods=["POST"])
-def predict_image():
-    if "file" not in request.files:
-        return jsonify({"error": "No file part"}), 400
-
-    file = request.files["file"]
-    if file.filename == "":
-        return jsonify({"error": "No selected file"}), 401
-
-    filepath = os.path.join(app.config["UPLOAD_FOLDER"], file.filename)
-    file.save(filepath)
-
-    result = predict(filepath)
-    if os.remove(filepath):
-        print ("image removed from local storage successfully")
-
-    print(result)
-
-    # recom = get_recommendations(result['product_id'])
-
-    # res={}
-    # res['identification']=result
-    # res['recommendation']=recom
-    return result, 200
+# Set the JWT secret key for authentication
+app.config["JWT_SECRET_KEY"] = "your_secret_key_here"  # keep this safe
 
 
-@app.route("/recommend/<product_id>", methods=["GET"])
-def get_recommendations(product_id):
-    # data = request.get_json()
-    product_id = int(product_id)
-    print("type of product id " , type(product_id))
-    if "product_id" == '':
-        return jsonify({"error": "Missing product_id"}), 400
+# Register blueprints
+app.register_blueprint(predict_bp)
+app.register_blueprint(recommend_bp)
+app.register_blueprint(images_bp)
+app.register_blueprint(fetchProducts_bp)
+app.register_blueprint(user_bp)
+app.register_blueprint(rating_bp)
 
-    # product_id = data["product_id"]
-    recommendations = recommend(product_id)
-    # print (recommendations)
-    return recommendations, 200
-
-@app.route("/image/<category>/<product_id>", methods=["GET"])
-def get_image(category, product_id):
-    folder_path = f"./Dataset/Images/{category}"  # Path to the category folder
-    possible_extensions = ["jpg", "png", "jpeg","avif","webp"]  # Extensions to try
-    filename_base = f"{product_id}_1"  # Base filename format
-
-    for ext in possible_extensions:
-        filename = f"{filename_base}.{ext}"
-        file_path = os.path.join(folder_path, filename)
-        if os.path.exists(file_path):  # Check if file exists
-            return send_from_directory(folder_path, filename)
-
-    # If no file is found, return a 404 error
-    abort(404, description="Image not found")
-
-@app.route("/products", methods=["GET"])
-def fetch_products():
-    return fetchProducts()
     
 if __name__ == "__main__":
     app.run(debug=True)

@@ -1,4 +1,18 @@
 augmented_images/
 Dataset/
-__pycache__/
 Collaborative-based/
+
+#To catch all Python cache folders anywhere:
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore all system-generated + Python-related junk
+*.log
+*.swp
+*.swo
+.env
+.vscode/
+.idea/
+*.pth
