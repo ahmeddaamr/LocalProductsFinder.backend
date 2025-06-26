@@ -15,7 +15,7 @@ def check_password(password, hashed):
 def generate_token(user_id):
     payload = {
         "user_id": str(user_id),
-        "exp": datetime.utcnow() + timedelta(days=7)  # token expires in 7 days
+        # "exp": datetime.utcnow() + timedelta(days=7)  # token expires in 7 days
     }
     token = jwt.encode(payload, current_app.config["JWT_SECRET_KEY"], algorithm="HS256")
     return token
@@ -34,18 +34,22 @@ def decode_token(token):
 def register_user():
     try:
         data = request.get_json()
+        username = data.get('username', '')
         email = data['email']
         password = data['password']
-        name = data.get('name', '')
+        country = data.get('country', 'Unknown')
 
         # Check if user already exists
         if User.objects(email=email).first():
             return jsonify({"error": "User already exists"}), 400
 
         hashed_password = hash_password(password)
-        user = User(email=email, password_hash=hashed_password, name=name)
+        user = User(username=username , email=email, password_hash=hashed_password, country=country)
         user.save()
-        return jsonify({"message": "User registered successfully", "user": user.to_json()}), 201
+        token = generate_token(user.id)
+        return jsonify({
+            "message": "User registered successfully", "user": user.to_json(),
+            'token':token}), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 

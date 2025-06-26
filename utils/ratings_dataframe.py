@@ -1,6 +1,7 @@
 import pandas as pd
 from Models.user_rates_product_model import UserRatesProduct
 
+# Fetching All Ratings as a DataFrame To use in Collaborative Filtering
 def get_all_ratings_dataframe():
     """
     Fetches all user-product ratings from the database and returns a Pandas DataFrame.

@@ -16,7 +16,7 @@ import nltk
 # nltk.download('punkt_tab')
 
 # Set file path
-file_path = "../../Dataset/Product_Final.xlsx"
+file_path = "Dataset/Product_Final.xlsx"
 if not os.path.exists(file_path):
     raise FileNotFoundError(f"File '{file_path}' not found. Ensure it's in the correct directory.")
 

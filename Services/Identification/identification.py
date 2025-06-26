@@ -20,7 +20,7 @@ def load_product_data(excel_path):
     return product_dict
 
 # Initialize the product dictionary
-product_dict = load_product_data('../../Dataset/Product_Final.xlsx')
+product_dict = load_product_data('Dataset/Product_Final.xlsx')
 
 class ModelLayers(nn.Module):
     def __init__(self, num_classes, model_name='MobileNet'):

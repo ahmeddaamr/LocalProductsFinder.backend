@@ -9,6 +9,8 @@ from Routes.recommendRoute import recommend_bp
 from Routes.userRoute import user_bp
 from Routes.ratingRoute import rating_bp
 import atexit, signal, sys
+# from ngrok_host import ngrok_host 
+
 app = Flask(__name__)
 
 # Enable CORS for cross-origin requests
@@ -50,6 +52,10 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 # Set the JWT secret key for authentication
 app.config["JWT_SECRET_KEY"] = "your_secret_key_here"  # keep this safe
 
+#command to run ngrok manually
+#ngrok http --domain=noble-lemur-humbly.ngrok-free.app 5000
+
+# ngrok_host()  # Start ngrok to expose the app
 
 # Register blueprints
 app.register_blueprint(predict_bp)
