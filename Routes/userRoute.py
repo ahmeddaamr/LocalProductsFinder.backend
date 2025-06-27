@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from Controllers.user_controller import register_user, login_user
+from Controllers.user_controller import register_user, login_user , fetch_user 
 
 user_bp = Blueprint('user_bp', __name__ , url_prefix='/user')
 
@@ -10,3 +10,12 @@ def register():
 @user_bp.route("/login", methods=["POST"])
 def login():
     return login_user()
+
+@user_bp.route("/get/<user_id>", methods=["GET"])
+def fetchUser(user_id):
+    return fetch_user(user_id)
+
+# @user_bp.route("/update", methods=["PUT"])
+# @jwt_required
+# def updateUser(user_id):
+#     return update_user(user_id)

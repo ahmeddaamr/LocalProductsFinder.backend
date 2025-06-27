@@ -71,3 +71,13 @@ def login_user():
         }), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 400
+    
+def fetch_user(user_id):
+    try:
+        user = User.objects(id=user_id).first()
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+        
+        return jsonify({"user": user.to_json()}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400

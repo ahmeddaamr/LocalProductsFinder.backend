@@ -20,6 +20,6 @@ def jwt_required(f):
         token = auth_header.split(" ")[1]
         user_id = decode_token(token)
         if not user_id:
-            return jsonify({"error": "Invalid or expired token"}), 401
+            return jsonify({"error": "Invalid or expired token , userid:<userid>"}), 401
         return f(user_id=user_id, *args, **kwargs)
     return decorated_function
