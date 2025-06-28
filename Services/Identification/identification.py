@@ -6,6 +6,10 @@ from PIL import Image
 import numpy as np
 from pathlib import Path
 import pandas as pd
+import sys
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
+from Models.product_model import Product
 
 # Load the Excel file into a dictionary
 def load_product_data(excel_path):
@@ -162,23 +166,46 @@ def predict_image(image_path, model_path='Services/Identification/best_model.pth
                 product_info = product_dict.get(label, {'product_id': 'Unknown', 'local': 'Unknown'})
                 product_id = product_info['product_id']
                 local = product_info['local']
-
+                print(f"Product ID: {product_id} : {type(product_id)}, Local: {local}")
+                
+                prod = Product.getproduct(product_id)
+                if prod is None:
+                    print(f"Product with ID {product_id} not found.")
+                else:
+                    print(f"Product found: {prod["Product Description"]}")
+                
+                category = prod.get('Product Category', 'Unknown')
+                sub_category = prod.get('Sub-category', 'Unknown')
+                country = prod.get('Country', 'Unknown')
 
                 results['top_predictions'].append({
-                    'rank': i + 1,
-                    'label': label,
+                    # 'label': label,
+                    'Product ID': product_id,
+                    'Product Description': label,
+                    'Product Category': category,
+                    'Sub-category': sub_category,
+                    'Local': local,
+                    'Country': country,
                     'confidence': conf,
-                    'product_id': product_id,
-                    'local': local
+                    'rank': i + 1
                 })
                 print(results['top_predictions'][i])
             
-            results['predicted_label'] = results['top_predictions'][0]['label']
+            results['Product ID'] = results['top_predictions'][0]['Product ID']  # Include product ID in the results
+            results['Product Description'] = results['top_predictions'][0]['Product Description']
+            results['Product Category'] = results['top_predictions'][0]['Product Category']
+            results['Sub-category'] = results['top_predictions'][0]['Sub-category']
+            results['Local'] = results['top_predictions'][0]['Local']   
+            results['Country'] = results['top_predictions'][0]['Country']
             results['confidence'] = results['top_predictions'][0]['confidence']
-            results['product_id'] = results['top_predictions'][0]['product_id']  # Include product ID in the results
-            results['local'] = results['top_predictions'][0]['local']
             if results['confidence'] < 0.15:
-                results['predicted_label'] = "Couldn't Identify Image"  
+                results['Product ID'] = 0  # Include product ID in the results
+                results['Product Description'] = "Couldn't Identify Image"
+                results['Product Category'] = "Unknown Category"
+                results['Sub-category'] = "Unknown Sub-Category"
+                results['Local'] = "Unkown"   
+                results['Country'] = "Unknown"
+                results['confidence'] = results['top_predictions'][0]['confidence']            
             return results
             
     except Exception as e:

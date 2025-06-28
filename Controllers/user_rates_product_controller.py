@@ -1,6 +1,7 @@
 from flask import request, jsonify
 from datetime import datetime
 from Models.user_rates_product_model import UserRatesProduct
+from Models.product_model import Product
 from mongoengine.connection import get_db
 
 # --- Get all ratings for a specific user ---
@@ -31,11 +32,13 @@ def user_rates_product(user_id, product_id):
         # product_id = data["product_id"]
         rating = float(data["rating"])
         review = data.get("review", "")
-
+        
+        # Check if the product exists
         existing = UserRatesProduct.objects(user_id=user_id, product_id=product_id).first()
         if existing:
             return jsonify({"message": "Rating already exists, use update instead."}), 409
-
+        
+        #Add the rating to userRatesProduct collection
         new_rating = UserRatesProduct(
             user_id=user_id,
             product_id=product_id,
@@ -45,6 +48,14 @@ def user_rates_product(user_id, product_id):
         )
         new_rating.save()
 
+        # Update the product's average rating and ratings count
+        product = Product.objects(product_id=product_id).first()
+        if not product:
+            return jsonify({"error": "Product not found."}), 404
+        product.ratings_count += 1
+        product.average_rating=get_avg_ratings()
+        product.save()
+        
         return jsonify({"message": "Rating added successfully."}), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 400
