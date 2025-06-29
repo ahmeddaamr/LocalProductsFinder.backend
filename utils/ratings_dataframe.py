@@ -19,3 +19,4 @@ def get_all_ratings_dataframe():
 
     df = pd.DataFrame(data)
     return df
+

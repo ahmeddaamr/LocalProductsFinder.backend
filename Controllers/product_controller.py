@@ -10,7 +10,7 @@ def get_product(product_id):
         
         # Convert the product to JSON format
         product_json = product.to_json()
-        
+        print(product_json)
         return jsonify(product_json), 200
     
     except Exception as e:

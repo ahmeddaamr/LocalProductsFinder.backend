@@ -14,25 +14,33 @@ def get_all_user_ratings(user_id):
 
         data = []
         for r in ratings:
-            data.append({
-                "product_id": r.product_id,
-                "rating": r.rating,
-                "review": r.review,
-                "timestamp": r.timestamp
-            })
+            product_data = Product.getproduct(r.product_id)  # Get product as dict or None
+
+            combined = {
+                "product": product_data,
+                "review": {
+                    "product_id": r.product_id,
+                    "rating": r.rating,
+                    "review": r.review,
+                    "timestamp": r.timestamp.isoformat()  # Optional: clean ISO format
+                }
+            }
+            data.append(combined)
 
         return jsonify(data), 200
+
     except Exception as e:
         return jsonify({"error": str(e)}), 400
+
 
 # --- User Adds a rating for a specific product ---
 def user_rates_product(user_id, product_id):
     try:
         data = request.get_json()
         # product_id = data["product_id"]
+        # print(f"data:{data}")
         rating = float(data["rating"])
-        review = data.get("review", "")
-        
+        review = data.get("comment", "")
         # Check if the product exists
         existing = UserRatesProduct.objects(user_id=user_id, product_id=product_id).first()
         if existing:
@@ -52,12 +60,19 @@ def user_rates_product(user_id, product_id):
         product = Product.objects(product_id=product_id).first()
         if not product:
             return jsonify({"error": "Product not found."}), 404
-        product.ratings_count += 1
-        product.average_rating=get_avg_ratings()
-        product.save()
         
+        avg_ratings = get_avg_ratings()
+        matched = next((item for item in avg_ratings if item["_id"] == product_id), None)
+
+        if matched:
+            product.modify(average_rating = float(matched["average_rating"]),ratings_count = int(matched["rating_count"]))
+        else:
+            product.modify(average_rating = rating,ratings_count = 1)
+            # print(f"average_rating:{float(matched["average_rating"])} , ratings_count:{int(matched["rating_count"])}")
+        # product.save()
         return jsonify({"message": "Rating added successfully."}), 201
     except Exception as e:
+        # print(e)
         return jsonify({"error": str(e)}), 400
 
 # --- User Updates his existing rating ---
@@ -117,7 +132,7 @@ def get_product_ratings(product_id):
                 "review": r.review,
                 "timestamp": r.timestamp
             })
-
+        # print({"product_id": product_id, "ratings": data})
         return jsonify({"product_id": product_id, "ratings": data}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 400

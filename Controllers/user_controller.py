@@ -57,6 +57,7 @@ def register_user():
 def login_user():
     try:
         data = request.get_json()
+        print(data)
         email = data['email']
         password = data['password']
 
@@ -72,6 +73,22 @@ def login_user():
     except Exception as e:
         return jsonify({"error": str(e)}), 400
     
+def logout_user(user_id):
+    try:
+        # data = request.get_json()
+        # print(data)
+
+        print(user_id)
+        user = User.objects(id=user_id).first()
+        print(user.email)
+
+        if user:
+            return jsonify({"message": "Logout successful"}) ,204
+        else:
+            return jsonify({"error":" User Does Not Exist! "}),404
+    except Exception as e:
+        return jsonify({"error":str(e)}) ,400
+
 def fetch_user(user_id):
     try:
         user = User.objects(id=user_id).first()
@@ -81,3 +98,32 @@ def fetch_user(user_id):
         return jsonify({"user": user.to_json()}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 400
+
+def update_user(user_id):
+    user = User.objects(id=user_id).first()
+
+    if not user:
+        return jsonify({"error": "User does not exist"}), 404
+
+    data = request.get_json()
+
+    user.email = data.get("email", user.email)
+    user.username = data.get("username", user.username)
+    user.country = data.get("country",user.country)
+    old_password = data.get("old_password")
+    new_password = data.get("new_password")
+
+    if old_password or new_password:
+        if not old_password or not new_password:
+            return jsonify({"error": "Both old and new passwords are required"}), 400
+
+        if old_password == new_password:
+            return jsonify({"error": "New password has been used before"}), 400
+
+        if check_password(old_password, user.password_hash):
+            user.password_hash = hash_password(new_password)
+        else:
+            return jsonify({"error": "Old password is incorrect"}), 400
+
+    user.save()
+    return jsonify({"message": "User details updated successfully"}), 200

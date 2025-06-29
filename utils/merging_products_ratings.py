@@ -1,5 +1,6 @@
 import json
-
+import pandas as pd
+from Models.product_model import Product
 
 
 def merge_products_with_ratings(products, ratings):
